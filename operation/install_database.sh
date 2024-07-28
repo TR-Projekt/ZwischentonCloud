@@ -72,10 +72,10 @@ chmod +x secure-mysql.sh
 # Download database creation scripts
 #
 echo "Downloading identity database creation script..."
-curl --progress-bar -L -o create_identity_database.sql https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/database_scripts/create_identity_database.sql
+curl --progress-bar -L -o create_identity_database.sql https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/database/create_identity_database.sql
 
 echo "Downloading zwischenton cloud database creation script..."
-curl --progress-bar -L -o create_zwischenton_database.sql https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/database_scripts/create_zwischenton_database.sql
+curl --progress-bar -L -o create_zwischenton_database.sql https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/database/create_zwischenton_database.sql
 
 # Run database creation script and configure users
 #
@@ -98,7 +98,7 @@ echo "Creating zwischentoncloud database user..."
 mysql -e "CREATE USER 'zwischenton.api.writer'@'localhost' IDENTIFIED BY '$database_password';"
 mysql -e "GRANT SELECT, INSERT, UPDATE, DELETE ON zwischenton_cloud_database.* TO 'zwischenton.api.writer'@'localhost';"
 sleep 1
-myFLUSH PRIVILEGES;sql -e ""
+mysql -e "FLUSH PRIVILEGES;"
 
 # Create the backup directory
 #
