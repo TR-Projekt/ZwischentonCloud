@@ -23,22 +23,25 @@ TBA
 
 TBA
 
-### Requirements
-
-TBA
-
-### Setup
-
-TBA
+#### Requirements
+- [Bash script](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) friendly environment
+- [Visual Studio Code](https://code.visualstudio.com/download) 1.91.1+
+    * Plugin recommendations are managed via [workspace recommendations](https://code.visualstudio.com/docs/editor/extension-marketplace#_recommended-extensions).
+- [MySQL Community Edition](https://www.mysql.com/de/products/community/) Version 8+ 
 
 ## Deployment
+All of the deployment scripts require Ubuntu 20 LTS as the operating system, so you have to do the [general VM setup](https://github.com/Festivals-App/festivals-documentation/tree/master/deployment/general-vm-setup) first and than use the install script to get the database and database-node running.
 
-### VM deployment
-
-The install, update and uninstall scripts should work with any system that uses *systemd* and *firewalld*.
-Additionally the scripts will somewhat work under macOS but won't configure the firewall or launch service.
+The project folder is located at `/usr/local/zwischentoncloud`.
+The log folder is located at `/var/log/zwischentoncloud`.
+The backup folder is located at `/srv/zwischentoncloud/backups`.
 
 Installing
+```bash
+curl -o install_database.sh https://raw.githubusercontent.com/Festivals-App/festivals-database/main/operation/install_database.sh
+chmod +x install_database.sh
+sudo ./install_database.sh <mysql_root_pw> <backup_pw> <database_pw>
+```
 ```bash
 curl -o install.sh https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/operation/install.sh
 chmod +x install.sh

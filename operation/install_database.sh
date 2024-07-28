@@ -32,21 +32,13 @@ database_user="mysql"
 #
 echo "Creating project directory"
 sleep 1
-mkdir -p /usr/local/zwischentoncloud || { echo "Failed to create project directory. Exiting." ; exit 1; }
-cd /usr/local/zwischentoncloud || { echo "Failed to access project directory. Exiting." ; exit 1; }
+mkdir -p /usr/local/zwischentoncloud/install || { echo "Failed to create project directory. Exiting." ; exit 1; }
+cd /usr/local/zwischentoncloud/install || { echo "Failed to access project directory. Exiting." ; exit 1; }
 
 # Install mysql if needed.
 #
 echo "Installing mysql-server..."
 apt-get install mysql-server -y > /dev/null;
-
-# Enables and configures the firewall.
-# Supported firewalls: ufw and firewalld
-# This step is skipped under macOS.
-#
-ufw allow mysql
-echo "Added mysql service to ufw rules"
-sleep 1
 
 # Launch mysql on startup
 #
@@ -140,9 +132,7 @@ sleep 1
 #
 echo "Cleanup"
 cd /usr/local/zwischentoncloud || exit
-rm secure-mysql.sh
-rm create_identity_database.sql
-rm create_zwischenton_database.sql
+rm -R /usr/local/zwischentoncloud/install
 sleep 1
 
 echo "Done."
