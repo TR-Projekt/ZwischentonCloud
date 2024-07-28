@@ -1,0 +1,21 @@
+# zwischentoncloud configuration file v1.0
+# TOML 1.0.0-rc.2+
+
+[service]
+bind-address = "localhost"
+bind-host = "localhost"
+port = 2340
+key = "TEST_API_KEY_001"
+
+[database]
+password = "we4711"
+
+[tls]
+zwischenton-root-ca = "/usr/local/zwischentoncloud/ca.crt"
+cert = "/usr/local/zwischentoncloud/server.crt"
+key = "/usr/local/zwischentoncloud/server.key"
+
+[jwt]
+expiration = 180
+accessprivatekeypath = "/usr/local/zwischentoncloud/access-private.pem"
+accesspublickeypath = "/usr/local/zwischentoncloud/access-public.pem"

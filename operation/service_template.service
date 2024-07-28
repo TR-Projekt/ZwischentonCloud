@@ -1,0 +1,17 @@
+[Unit]
+Description=ZwischentonCloud, a live and lightweight go server gateway.
+ConditionPathExists=/usr/local/bin/zwischentoncloud
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5s
+ExecStartPre=/bin/mkdir -p /var/log/zwischentoncloud
+ExecStart=/usr/local/bin/zwischentoncloud
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
