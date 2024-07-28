@@ -38,7 +38,7 @@ The backup folder is located at `/srv/zwischentoncloud/backups`.
 
 Installing
 ```bash
-curl -o install_database.sh https://raw.githubusercontent.com/Festivals-App/festivals-database/main/operation/install_database.sh
+curl -o install_database.sh https://raw.githubusercontent.com/TR-Projekt/zwischentoncloud/main/operation/install_database.sh
 chmod +x install_database.sh
 sudo ./install_database.sh <mysql_root_pw> <backup_pw> <database_pw>
 ```

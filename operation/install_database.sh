@@ -83,8 +83,8 @@ echo "Configuring mysql"
 sleep 1
 echo "Creating databases..."
 sleep 1
-mysql -e "source /usr/local/zwischentoncloud/create_identity_database.sql"
-mysql -e "source /usr/local/zwischentoncloud/create_zwischenton_database.sql"
+mysql -e "source /usr/local/zwischentoncloud/install/create_identity_database.sql"
+mysql -e "source /usr/local/zwischentoncloud/install/create_zwischenton_database.sql"
 echo "Creating local backup user..."
 mysql -e "CREATE USER 'zwischentoncloud.backup'@'localhost' IDENTIFIED BY '$backup_password';"
 mysql -e "GRANT ALL PRIVILEGES ON zwischenton_identity_database.* TO 'zwischentoncloud.backup'@'localhost';"
