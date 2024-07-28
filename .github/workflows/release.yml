@@ -29,6 +29,7 @@ jobs:
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         asset_name: zwischentoncloud-${{ matrix.goos }}-${{ matrix.goarch }}
+        binary_name: "zwischentoncloud"
         build_flags: -v
         ldflags: -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.ServerVersion=${{ env.APP_VERSION }}' -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.BuildTime=${{ env.BUILD_TIME }}' -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.GitRef=${{ github.ref }}'
         extra_files: LICENSE README.md config_template.toml operation/service_template.service operation/update.sh
