@@ -23,7 +23,7 @@ fi
 #
 mkdir -p /usr/local/zwischentoncloud/install || { echo "Failed to create working directory. Exiting." ; exit 1; }
 cd /usr/local/zwischentoncloud/install || { echo "Failed to access working directory. Exiting." ; exit 1; }
-echo "Installing zwischentoncloud using port 443."
+echo "Installing zwischentoncloud using port 2340."
 sleep 1
 
 # Get system os
@@ -90,8 +90,8 @@ fi
 #
 if command -v ufw > /dev/null; then
 
-  ufw allow https >/dev/null
-  echo "Added zwischentoncloud to ufw using port 443."
+  ufw allow 2340 >/dev/null
+  echo "Added zwischentoncloud to ufw using port 2340."
   sleep 1
 
 elif ! [ "$(uname -s)" = "Darwin" ]; then
