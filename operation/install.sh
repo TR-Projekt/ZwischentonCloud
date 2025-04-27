@@ -1,141 +1,265 @@
 #!/bin/bash
 #
-# install.sh 1.0.0
+# install.sh - ZwischentonCloud Installer Script
 #
-# Enables the firewall, installs the newest zwischentoncloud and starts it as a service.
-#
-# (c)2024 Simon Gaus
+# (c)2020-2025 Simon Gaus
 #
 
-# Test for web server user
-#
-WEB_USER="www-data"
-id -u "$WEB_USER" &>/dev/null;
-if [ $? -ne 0 ]; then
-  WEB_USER="www"
-  if [ $? -ne 0 ]; then
-    echo "Failed to find user to run web server. Exiting."
+# ─────────────────────────────────────────────────────────────────────────────
+# 🛑 Check if all parameters are supplied
+# ─────────────────────────────────────────────────────────────────────────────
+if [ $# -ne 3 ]; then
+    echo -e "\n\033[1;31m🚨  ERROR: Missing parameters!\033[0m"
+    echo -e "\033[1;34m🔹  USAGE:\033[0m sudo ./install.sh \033[1;32m<mysql_root_pw> <mysql_backup_pw> <database_pw>\033[0m"
+    echo -e "\033[1;31m❌  Exiting.\033[0m\n"
     exit 1
-  fi
 fi
 
-# Move to working dir
-#
-mkdir -p /usr/local/zwischentoncloud/install || { echo "Failed to create working directory. Exiting." ; exit 1; }
-cd /usr/local/zwischentoncloud/install || { echo "Failed to access working directory. Exiting." ; exit 1; }
-echo "Installing zwischentoncloud using port 2340."
+# ─────────────────────────────────────────────────────────────────────────────
+# 🎯 Store parameters in variables
+# ─────────────────────────────────────────────────────────────────────────────
+root_password="$1"
+backup_password="$2"
+database_password="$3"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔍 Detect Web Server User
+# ─────────────────────────────────────────────────────────────────────────────
+WEB_USER="www-data"
+if ! id -u "$WEB_USER" &>/dev/null; then
+    WEB_USER="www"
+    if ! id -u "$WEB_USER" &>/dev/null; then
+        echo -e "\n\033[1;31m❌  ERROR: Web server user not found! Exiting.\033[0m\n"
+        exit 1
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔍 Set Database System User
+# ─────────────────────────────────────────────────────────────────────────────
+database_user="mysql"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 📁 Setup Working Directory
+# ─────────────────────────────────────────────────────────────────────────────
+WORK_DIR="/usr/local/zwischentoncloud/install"
+mkdir -p "$WORK_DIR" && cd "$WORK_DIR" || { echo -e "\n\033[1;31m❌  ERROR: Failed to create/access working directory!\033[0m\n"; exit 1; }
+echo -e "\n📂  Working directory set to \e[1;34m$WORK_DIR\e[0m"
 sleep 1
 
-# Get system os
-#
+# ─────────────────────────────────────────────────────────────────────────────
+# 🖥  Detect System OS and Architecture
+# ─────────────────────────────────────────────────────────────────────────────
 if [ "$(uname -s)" = "Darwin" ]; then
-  os="darwin"
+    os="darwin"
 elif [ "$(uname -s)" = "Linux" ]; then
-  os="linux"
+    os="linux"
 else
-  echo "System is not Darwin or Linux. Exiting."
-  exit 1
+    echo -e "\n🚨  ERROR: Unsupported OS. Exiting.\n"
+    exit 1
 fi
-
-# Get systems cpu architecture
-#
 if [ "$(uname -m)" = "x86_64" ]; then
-  arch="amd64"
+    arch="amd64"
 elif [ "$(uname -m)" = "arm64" ]; then
-  arch="arm64"
+    arch="arm64"
 else
-  echo "System is not x86_64 or arm64. Exiting."
-  exit 1
+    echo -e "\n🚨  ERROR: Unsupported CPU architecture. Exiting.\n"
+    exit 1
 fi
 
-# Build url to latest binary for the given system
-#
+# ─────────────────────────────────────────────────────────────────────────────
+# 📦 Download latest release
+# ─────────────────────────────────────────────────────────────────────────────
 file_url="https://github.com/TR-Projekt/zwischentoncloud/releases/latest/download/zwischentoncloud-$os-$arch.tar.gz"
-echo "The system is $os on $arch."
-sleep 1
-
-# Install zwischentoncloud to /usr/local/bin/zwischentoncloud. TODO: Maybe just link to /usr/local/bin?
-#
-echo "Downloading newest zwischentoncloud binary release..."
-curl -L "$file_url" -o zwischentoncloud.tar.gz
+echo -e "\n📥  Downloading latest ZwischentonCloud release..."
+curl --progress-bar -L "$file_url" -o zwischentoncloud.tar.gz
+echo -e "📦  Extracting archive..."
 tar -xf zwischentoncloud.tar.gz
-mv zwischentoncloud /usr/local/bin/zwischentoncloud || { echo "Failed to install zwischentoncloud binary. Exiting." ; exit 1; }
-echo "Installed the zwischentoncloud binary to '/usr/local/bin/zwischentoncloud'."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 📦 Install & Enable & Start MySQL Server
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "\n🗂️  Installing MySQL server..."
+apt-get install mysql-server -y > /dev/null 2>&1
+systemctl enable mysql &>/dev/null && systemctl start mysql &>/dev/null
+echo -e "✅  MySQL service is up and running."
 sleep 1
 
-## Install server config file
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔐 Install MySQL Backup Credential File
+# ─────────────────────────────────────────────────────────────────────────────
+credentialsFile=/usr/local/zwischentoncloud/mysql.conf
+cat << EOF > $credentialsFile
+# zwischentoncloud configuration file v1.0
+# TOML 1.0.0-rc.2+
+
+[client]
+user = 'zwischentoncloud.backup'
+password = '$backup_password'
+host = 'localhost'
+EOF
+if [ -f "$credentialsFile" ]; then
+    echo -e "✅  MySQL backup credential file successfully created at \e[1;34m$credentialsFile\e[0m"
+else
+    echo -e "🚨  ERROR: Failed to create MySQL credential file. Exiting.\n"
+    exit 1
+fi
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔑 Secure MySQL
+# ─────────────────────────────────────────────────────────────────────────────
+chmod +x secure-mysql.sh
+./secure-mysql.sh "$root_password"
+echo -e "✅  MySQL security script executed."
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🗄️  Setup Databases & Users
+# ─────────────────────────────────────────────────────────────────────────────
+mysql -e "source $WORK_DIR/create_identity_database.sql"
+mysql -e "CREATE USER 'zwischentoncloud.identity.writer'@'localhost' IDENTIFIED BY '$database_password';"
+mysql -e "GRANT SELECT, INSERT, UPDATE, DELETE ON zwischenton_identity_database.* TO 'zwischentoncloud.identity.writer'@'localhost';"
+
+mysql -e "source $WORK_DIR/create_zwischenton_database.sql"
+mysql -e "CREATE USER 'zwischentoncloud.api.writer'@'localhost' IDENTIFIED BY '$database_password';"
+mysql -e "GRANT SELECT, INSERT, UPDATE, DELETE ON zwischenton_cloud_database.* TO 'zwischentoncloud.api.writer'@'localhost';"
+
+mysql -e "CREATE USER 'zwischentoncloud.backup'@'localhost' IDENTIFIED BY '$backup_password';"
+mysql -e "GRANT ALL PRIVILEGES ON zwischenton_identity_database.* TO 'zwischentoncloud.backup'@'localhost';"
+mysql -e "GRANT ALL PRIVILEGES ON zwischenton_cloud_database.* TO 'zwischentoncloud.backup'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
+echo -e "✅  Database and users created."
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 📂 Setup Database Backup Directory
+# ─────────────────────────────────────────────────────────────────────────────
+mkdir -p /srv/zwischentoncloud/backups
+mv backup.sh /srv/zwischentoncloud/backups/backup.sh
+chmod +x /srv/zwischentoncloud/backups/backup.sh
+echo -e "✅  Database backup directory and script configured."
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⏳ Install Cronjob for Daily Backup at 3 AM
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "0 3 * * * $WEB_USER /srv/zwischentoncloud/backups/backup.sh" | tee -a /etc/cron.d/zwischentoncloud_backup > /dev/null
+echo -e "✅  Cronjob installed! Backup will run daily at \e[1;34m3 AM\e[0m"
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 📦 Install ZwischentonCloud
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "\n📥  Installing latest ZwischentonCloud binary..."
+mv zwischentoncloud /usr/local/bin/zwischentoncloud || {
+    echo -e "\n🚨  ERROR: Failed to install Zwischenton Cloud binary. Exiting.\n"
+    exit 1
+}
+echo -e "✅  Installed ZwischentonCloud to \e[1;34m/usr/local/bin/zwischentoncloud\e[0m."
+sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🛠  Install Server Configuration File
+# ─────────────────────────────────────────────────────────────────────────────
 mv config_template.toml /etc/zwischentoncloud.conf
-echo "Moved default zwischentoncloud config to '/etc/zwischentoncloud.conf'."
+if [ -f "/etc/zwischentoncloud.conf" ]; then
+    echo -e "✅  Configuration file moved to \e[1;34m/etc/zwischentoncloud.conf\e[0m."
+else
+    echo -e "\n🚨  ERROR: Failed to move configuration file. Exiting.\n"
+    exit 1
+fi
 sleep 1
 
-## Prepare log directory
-mkdir /var/log/zwischentoncloud || { echo "Failed to create log directory. Exiting." ; exit 1; }
-echo "Create log directory at '/var/log/zwischentoncloud'."
+# ─────────────────────────────────────────────────────────────────────────────
+# 📂  Prepare Log Directory
+# ─────────────────────────────────────────────────────────────────────────────
+mkdir -p /var/log/zwischentoncloud || {
+    echo -e "\n🚨  ERROR: Failed to create log directory. Exiting.\n"
+    exit 1
+}
+echo -e "✅  Log directory created at \e[1;34m/var/log/zwischentoncloud\e[0m."
+sleep 1
 
-## Prepare server update workflow
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔄 Prepare Remote Update Workflow
+# ─────────────────────────────────────────────────────────────────────────────
 mv update.sh /usr/local/zwischentoncloud/update.sh
 chmod +x /usr/local/zwischentoncloud/update.sh
 cp /etc/sudoers /tmp/sudoers.bak
 echo "$WEB_USER ALL = (ALL) NOPASSWD: /usr/local/zwischentoncloud/update.sh" >> /tmp/sudoers.bak
-# Check syntax of the backup file to make sure it is correct.
-visudo -cf /tmp/sudoers.bak
-if [ $? -eq 0 ]; then
-  # Replace the sudoers file with the new only if syntax is correct.
-  sudo cp /tmp/sudoers.bak /etc/sudoers
+# Validate and replace sudoers file if syntax is correct
+if visudo -cf /tmp/sudoers.bak &>/dev/null; then
+    sudo cp /tmp/sudoers.bak /etc/sudoers
+    echo -e "✅  Prepared remote update workflow."
 else
-  echo "Could not modify /etc/sudoers file. Please do this manually." ; exit 1;
+    echo -e "\n🚨  ERROR: Could not modify /etc/sudoers file. Please do this manually. Exiting.\n"
+    exit 1
 fi
+sleep 1
 
-# Enable and configure the firewall.
-#
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔥 Enable and Configure Firewall
+# ─────────────────────────────────────────────────────────────────────────────
 if command -v ufw > /dev/null; then
-
-  ufw allow 2340 >/dev/null
-  echo "Added zwischentoncloud to ufw using port 2340."
-  sleep 1
-
-elif ! [ "$(uname -s)" = "Darwin" ]; then
-  echo "No firewall detected and not on macOS. Exiting."
-  exit 1
-fi
-
-# Install systemd service
-#
-if command -v service > /dev/null; then
-
-  if ! [ -f "/etc/systemd/system/zwischentoncloud.service" ]; then
-    mv service_template.service /etc/systemd/system/zwischentoncloud.service
-    echo "Created systemd service."
+    echo -e "\n🔥  Configuring UFW firewall..."
+    mv ufw_app_profile /etc/ufw/applications.d/zwischentoncloud
+    ufw allow zwischentoncloud > /dev/null
+    echo -e "✅  Added zwischentoncloud to UFW with port 2340."
     sleep 1
-  fi
-
-  systemctl enable zwischentoncloud > /dev/null
-  echo "Enabled systemd service."
-  sleep 1
-
 elif ! [ "$(uname -s)" = "Darwin" ]; then
-  echo "Systemd is missing and not on macOS. Exiting."
-  exit 1
+    echo -e "\n🚨  ERROR: No firewall detected and not on macOS. Exiting.\n"
+    exit 1
 fi
 
-## Set appropriate permissions
-##
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚙️  Install Systemd Service
+# ─────────────────────────────────────────────────────────────────────────────
+if command -v service > /dev/null; then
+    echo -e "\n🚀  Configuring systemd service..."
+    if ! [ -f "/etc/systemd/system/fzwischentoncloud.service" ]; then
+        mv service_template.service /etc/systemd/system/zwischentoncloud.service
+        echo -e "✅  Created systemd service configuration."
+        sleep 1
+    fi
+    systemctl enable zwischentoncloud > /dev/null
+    echo -e "✅  Enabled systemd service for ZwischentonCloud."
+    sleep 1
+elif ! [ "$(uname -s)" = "Darwin" ]; then
+    echo -e "\n🚨  ERROR: Systemd is missing and not on macOS. Exiting.\n"
+    exit 1
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔑 Set Appropriate Permissions
+# ─────────────────────────────────────────────────────────────────────────────
 chown -R "$WEB_USER":"$WEB_USER" /usr/local/zwischentoncloud
 chown -R "$WEB_USER":"$WEB_USER" /var/log/zwischentoncloud
+chown -R "$WEB_USER":"$WEB_USER" /srv/zwischentoncloud
 chown "$WEB_USER":"$WEB_USER" /etc/zwischentoncloud.conf
+echo -e "\n🔐  Set Appropriate Permissions."
+sleep 1
 
-# Download Zwischenton Root CA certificate
-#--> to /usr/local/zwischentoncloud/ca.crt
-
-# Remving unused files
-#
-echo "Cleanup..."
+# ─────────────────────────────────────────────────────────────────────────────
+# 🧹 Cleanup Installation Files
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "🧹  Cleaning up installation files..."
 cd /usr/local/zwischentoncloud || exit
-rm -R /usr/local/zwischentoncloud/install
+rm -rf /usr/local/zwischentoncloud/install
 sleep 1
 
-echo "Done!"
-sleep 1
-
-echo "You can start the server manually by running 'sudo systemctl start zwischentoncloud' after you updated the configuration file at '/etc/zwischentoncloud.conf'"
+# ─────────────────────────────────────────────────────────────────────────────
+# 🎉 COMPLETE Message
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "\n\033[1;32m══════════════════════════════════════════════════════════════════════════\033[0m"
+echo -e "\033[1;32m✅  INSTALLATION COMPLETE! 🚀\033[0m"
+echo -e "\033[1;32m══════════════════════════════════════════════════════════════════════════\033[0m"
+echo -e "\n📂 \033[1;34mBefore starting, you need to:\033[0m"
+echo -e "\n   \033[1;34m1. Configure the mTLS certificates.\033[0m"
+echo -e "   \033[1;34m2. Configure the JWT signing keys.\033[0m"
+echo -e "   \033[1;34m3. Update the configuration file at:\033[0m"
+echo -e "\n   \033[1;32m    /etc/zwischentoncloud.conf\033[0m"
+echo -e "\n🔹 \033[1;34mThen start the server manually:\033[0m"
+echo -e "\n   \033[1;32m    sudo systemctl start zwischentoncloud\033[0m"
+echo -e "\n\033[1;32m══════════════════════════════════════════════════════════════════════════\033[0m\n"
 sleep 1

@@ -1,0 +1,27 @@
+// Markdown lint rules
+//
+// Full schema: https://github.com/DavidAnson/markdownlint/blob/main/schema/.markdownlint.jsonc
+{
+
+    // MD001/heading-increment : Heading levels should only increment by one level at a time : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md001.md
+    "MD001": false,
+  
+    // MD013/line-length : Line length : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md013.md
+    "MD013": {
+      // Number of characters
+      "line_length": 120,
+      // Include code blocks
+      "code_blocks": false,
+      // Include headings
+      "headings": true
+    },
+  
+    // MD033/no-inline-html : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md033.md
+    "MD033": false,
+  
+    // MD036/no-emphasis-as-heading : Emphasis used instead of a heading : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md036.md
+    "MD036": false,
+  
+    // MD041/first-line-heading/first-line-h1 : First line in a file should be a top-level heading : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md041.md
+    "MD041": false
+  }

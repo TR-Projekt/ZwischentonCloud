@@ -10,11 +10,11 @@ import (
 	"time"
 
 	festivalspki "github.com/Festivals-App/festivals-pki"
+	servertools "github.com/Festivals-App/festivals-server-tools"
 	"github.com/TR-Projekt/zwischentoncloud/server/config"
 	"github.com/TR-Projekt/zwischentoncloud/server/database"
 	"github.com/TR-Projekt/zwischentoncloud/server/handler"
 	token "github.com/TR-Projekt/zwischentoncloud/server/jwt"
-	"github.com/TR-Projekt/zwischentoncloud/server/servertools"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/go-sql-driver/mysql"
@@ -46,21 +46,10 @@ func (s *Server) initialize(config *config.Config) {
 
 	s.setZwischentonDatabase()
 	s.setIdentityDatabase()
-	s.setIdentityService(s.identityDB)
+	s.setIdentityService()
 	s.setTLSHandling()
 	s.setMiddleware()
 	s.setRoutes(config)
-}
-
-func (s *Server) setIdentityService(identityDB *sql.DB) {
-
-	config := s.Config
-	s.Auth = token.NewAuthService(config.AccessTokenPrivateKeyPath, config.AccessTokenPublicKeyPath, config.JwtExpiration, "de.zwischenton.cloud.issuer")
-	apiKeys, err := database.GetAllAPIKeys(identityDB)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load api keys from zwischenton identity database.")
-	}
-	s.Validator = token.NewValidationService(s.Auth, apiKeys)
 }
 
 func (s *Server) setZwischentonDatabase() {
@@ -122,10 +111,23 @@ func (s *Server) setIdentityDatabase() {
 	s.identityDB = db
 }
 
+func (s *Server) setIdentityService() {
+
+	config := s.Config
+	s.Auth = token.NewAuthService(config.AccessTokenPrivateKeyPath, config.AccessTokenPublicKeyPath, config.JwtExpiration, "de.zwischenton.cloud.issuer")
+
+	apiKeys, err := database.GetAllAPIKeys(s.identityDB)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load api keys from zwischenton identity database.")
+	}
+	s.Validator = token.NewValidationService(s.Auth, apiKeys)
+}
+
 func (s *Server) setTLSHandling() {
-	tlsConfig := &tls.Config{
-		ClientAuth:     tls.RequireAndVerifyClientCert,
-		GetCertificate: festivalspki.LoadServerCertificateHandler(s.Config.TLSCert, s.Config.TLSKey, s.Config.TLSRootCert),
+
+	tlsConfig, err := festivalspki.NewServerTLSConfig(s.Config.TLSCert, s.Config.TLSKey, s.Config.TLSRootCert)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to set TLS handling")
 	}
 	s.TLSConfig = tlsConfig
 }
@@ -135,7 +137,7 @@ func (s *Server) setMiddleware() {
 	// tell the router which middleware to use
 	s.Router.Use(
 		// used to log the request to the console
-		servertools.Middleware(servertools.TraceLogger("/var/log/zwischenton/trace.log")),
+		servertools.Middleware(servertools.TraceLogger(s.Config.TraceLog)),
 		// tries to recover after panics (?)
 		middleware.Recoverer,
 	)
@@ -191,17 +193,30 @@ func (s *Server) Run(conf *config.Config) {
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
-
-		Addr:      conf.ServiceBindHost + ":" + strconv.Itoa(conf.ServicePort),
-		Handler:   s.Router,
-		TLSConfig: s.TLSConfig,
+		Addr:              conf.ServiceBindHost + ":" + strconv.Itoa(conf.ServicePort),
+		Handler:           s.Router,
+		TLSConfig:         s.TLSConfig,
 	}
-
-	//server.SetKeepAlivesEnabled(false)
 
 	if err := server.ListenAndServeTLS("", ""); err != nil {
 		log.Fatal().Err(err).Str("type", "server").Msg("Failed to run server")
 	}
+}
+
+type JWTAuthenticatedHandlerFunction func(claims *token.UserClaims, enc *handler.HandlerEncapsulator3000, w http.ResponseWriter, r *http.Request)
+
+func (s *Server) handleRequest(requestHandler JWTAuthenticatedHandlerFunction) http.HandlerFunc {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		claims := token.GetValidClaims(r, s.Validator)
+		if claims == nil {
+			servertools.UnauthorizedResponse(w)
+			return
+		}
+		enc := &handler.HandlerEncapsulator3000{ZwischentonDB: s.zwischentonDB, IdentityDB: s.identityDB, Auth: s.Auth, Validator: s.Validator}
+		requestHandler(claims, enc, w, r)
+	})
 }
 
 type APIKeyAuthenticatedHandlerFunction func(enc *handler.HandlerEncapsulator3000, w http.ResponseWriter, r *http.Request)
@@ -219,21 +234,5 @@ func (s *Server) handleAPIRequest(requestHandler APIKeyAuthenticatedHandlerFunct
 		}
 		enc := &handler.HandlerEncapsulator3000{ZwischentonDB: s.zwischentonDB, IdentityDB: s.identityDB, Auth: s.Auth, Validator: s.Validator}
 		requestHandler(enc, w, r)
-	})
-}
-
-type JWTAuthenticatedHandlerFunction func(claims *token.UserClaims, enc *handler.HandlerEncapsulator3000, w http.ResponseWriter, r *http.Request)
-
-func (s *Server) handleRequest(requestHandler JWTAuthenticatedHandlerFunction) http.HandlerFunc {
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		claims := token.GetValidClaims(r, s.Validator)
-		if claims == nil {
-			servertools.UnauthorizedResponse(w)
-			return
-		}
-		enc := &handler.HandlerEncapsulator3000{ZwischentonDB: s.zwischentonDB, IdentityDB: s.identityDB, Auth: s.Auth, Validator: s.Validator}
-		requestHandler(claims, enc, w, r)
 	})
 }

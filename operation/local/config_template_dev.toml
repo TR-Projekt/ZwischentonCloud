@@ -1,0 +1,24 @@
+# zwischentoncloud configuration file v1.0
+# TOML 1.0.0-rc.2+
+
+[service]
+bind-host = "cloud.zwischenton.dev"
+port = 2340
+
+[tls]
+zwischenton-root-ca = "~/Library/Containers/org.zwischenton.project/usr/local/zwischentoncloud/ca.crt"
+cert = "~/Library/Containers/org.zwischenton.project/usr/local/zwischentoncloud/server.crt"
+key = "~/Library/Containers/org.zwischenton.project/usr/local/zwischentoncloud/server.key"
+
+[database]
+password = "we4711"
+
+[jwt]
+expiration = 180
+accesspublickeypath = "~/Library/Containers/org.zwischenton.project/usr/local/zwischentoncloud/authentication.publickey.pem"
+accessprivatekeypath = "~/Library/Containers/org.zwischenton.project/usr/local/zwischentoncloud/authentication.privatekey.pem"
+
+
+[log]
+info = "~/Library/Containers/org.zwischenton.project/var/log/zwischentoncloud/info.log"
+trace = "~/Library/Containers/org.zwischenton.project/var/log/zwischentoncloud/trace.log"

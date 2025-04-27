@@ -16,14 +16,14 @@ jobs:
           - goarch: arm64
             goos: linux 
     steps:
-    - uses: actions/checkout@v4.1.7
+    - uses: actions/checkout@v4.2.2
 
     - name: Set APP_VERSION env
       run: echo APP_VERSION=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev ) >> ${GITHUB_ENV}
     - name: Set BUILD_TIME env
       run: echo BUILD_TIME=$(date) >> ${GITHUB_ENV}
 
-    - uses: wangyoucao577/go-release-action@v1.51
+    - uses: wangyoucao577/go-release-action@v1.53
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
@@ -32,4 +32,4 @@ jobs:
         binary_name: "zwischentoncloud"
         build_flags: -v
         ldflags: -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.ServerVersion=${{ env.APP_VERSION }}' -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.BuildTime=${{ env.BUILD_TIME }}' -X 'github.com/TR-Projekt/ZwischentonCloud/server/status.GitRef=${{ github.ref }}'
-        extra_files: LICENSE README.md config_template.toml operation/service_template.service operation/update.sh
+        extra_files: LICENSE README.md config_template.toml operation/update.sh operation/backup.sh operation/secure-mysql.sh operation/service_template.service operation/ufw_app_profile database/create_identity_database.sql database/create_zwischenton_database.sql

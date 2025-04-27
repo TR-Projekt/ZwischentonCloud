@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	servertools "github.com/Festivals-App/festivals-server-tools"
 	token "github.com/TR-Projekt/zwischentoncloud/server/jwt"
-	"github.com/TR-Projekt/zwischentoncloud/server/servertools"
 	"github.com/rs/zerolog/log"
 )
 

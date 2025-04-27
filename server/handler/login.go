@@ -5,9 +5,9 @@ import (
 	"io"
 	"net/http"
 
+	servertools "github.com/Festivals-App/festivals-server-tools"
 	"github.com/TR-Projekt/zwischentoncloud/server/database"
 	token "github.com/TR-Projekt/zwischentoncloud/server/jwt"
-	"github.com/TR-Projekt/zwischentoncloud/server/servertools"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )

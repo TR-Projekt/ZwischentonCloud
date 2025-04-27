@@ -2,10 +2,8 @@
 # TOML 1.0.0-rc.2+
 
 [service]
-bind-address = "localhost"
 bind-host = "localhost"
 port = 2340
-key = "TEST_API_KEY_001"
 
 [database]
 password = "we4711"
@@ -17,5 +15,10 @@ key = "/usr/local/zwischentoncloud/server.key"
 
 [jwt]
 expiration = 180
-accessprivatekeypath = "/usr/local/zwischentoncloud/access-private.pem"
-accesspublickeypath = "/usr/local/zwischentoncloud/access-public.pem"
+accesspublickeypath = "/usr/local/zwischentoncloud/authentication.publickey.pem"
+accessprivatekeypath = "/usr/local/zwischentoncloud/authentication.privatekey.pem"
+
+
+[log]
+info = "/var/log/zwischentoncloud/info.log"
+trace = "/var/log/zwischentoncloud/trace.log"
