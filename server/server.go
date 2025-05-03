@@ -167,6 +167,8 @@ func (s *Server) setRoutes(config *config.Config) {
 	s.Router.Post("/zwischentons/{objectID}/situation/{resourceID}", s.handleRequest(handler.SetSituationForZwischenton))
 	s.Router.Delete("/zwischentons/{objectID}/situation/{resourceID}", s.handleRequest(handler.RemoveSituationForZwischenton))
 
+	s.Router.Get("/situations", s.handleAPIRequest(handler.GetSituations))
+	s.Router.Get("/situations/{objectID}", s.handleAPIRequest(handler.GetSituation))
 	s.Router.Post("/situations", s.handleRequest(handler.CreateSituation))
 	s.Router.Patch("/situations/{objectID}", s.handleRequest(handler.UpdateSituation))
 	s.Router.Delete("/situations/{objectID}", s.handleRequest(handler.DeleteSituation))
