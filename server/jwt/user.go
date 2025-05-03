@@ -31,5 +31,6 @@ type UserClaims struct {
 	UserID           string
 	UserRole         int
 	UserZwischentons []int
+	UserSituations   []int
 	jwt.RegisteredClaims
 }

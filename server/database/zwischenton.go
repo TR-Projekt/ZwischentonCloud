@@ -13,6 +13,7 @@ type Entity string
 
 const (
 	Zwischenton Entity = "zwischenton"
+	Situation   Entity = "situation"
 )
 
 func Select(db *sql.DB, table string, objectIDs []int) (*sql.Rows, error) {

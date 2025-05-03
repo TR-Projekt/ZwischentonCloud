@@ -60,7 +60,7 @@ and simplifies common tasks.
     ```
 
 2. By invoking the `install` command Make will install the newly build binary and all files it needs to run.
-   The default install path is a folder inside your users container folder at `~/Library/Containers/org.festivalsapp.project`, 
+   The default install path is a folder inside your users container folder at `~/Library/Containers/org.festivalsapp.project`,
    this is so you don't need to use `sudo` to install and run the website node.
 
     ```bash

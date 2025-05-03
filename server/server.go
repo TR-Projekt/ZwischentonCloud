@@ -161,29 +161,15 @@ func (s *Server) setRoutes(config *config.Config) {
 	s.Router.Get("/zwischentons", s.handleAPIRequest(handler.GetZwischentons))
 	s.Router.Get("/zwischentons/{objectID}", s.handleAPIRequest(handler.GetZwischenton))
 	s.Router.Post("/zwischentons", s.handleRequest(handler.CreateZwischenton))
+	s.Router.Patch("/zwischentons/{objectID}", s.handleRequest(handler.UpdateZwischenton))
+	s.Router.Delete("/zwischentons/{objectID}", s.handleRequest(handler.DeleteZwischenton))
+	s.Router.Get("/zwischentons/{objectID}/situation", s.handleAPIRequest(handler.GetZwischentonSituation))
+	s.Router.Post("/zwischentons/{objectID}/situation/{resourceID}", s.handleRequest(handler.SetSituationForZwischenton))
+	s.Router.Delete("/zwischentons/{objectID}/situation/{resourceID}", s.handleRequest(handler.RemoveSituationForZwischenton))
 
-	/*
-		s.Router.Get("/festivals", s.handleAPIRequest(handler.GetFestivals))
-		s.Router.Get("/festivals/{objectID}", s.handleAPIRequest(handler.GetFestival))
-		s.Router.Get("/festivals/{objectID}/events", s.handleAPIRequest(handler.GetFestivalEvents))
-		s.Router.Get("/festivals/{objectID}/image", s.handleAPIRequest(handler.GetFestivalImage))
-		s.Router.Get("/festivals/{objectID}/links", s.handleAPIRequest(handler.GetFestivalLinks))
-		s.Router.Get("/festivals/{objectID}/place", s.handleAPIRequest(handler.GetFestivalPlace))
-		s.Router.Get("/festivals/{objectID}/tags", s.handleAPIRequest(handler.GetFestivalTags))
-
-		s.Router.Post("/festivals", s.handleRequest(handler.CreateFestival))
-		s.Router.Patch("/festivals/{objectID}", s.handleRequest(handler.UpdateFestival))
-		s.Router.Delete("/festivals/{objectID}", s.handleRequest(handler.DeleteFestival))
-		s.Router.Post("/festivals/{objectID}/events/{resourceID}", s.handleRequest(handler.SetEventForFestival))
-		s.Router.Post("/festivals/{objectID}/image/{resourceID}", s.handleRequest(handler.SetImageForFestival))
-		s.Router.Post("/festivals/{objectID}/links/{resourceID}", s.handleRequest(handler.SetLinkForFestival))
-		s.Router.Post("/festivals/{objectID}/place/{resourceID}", s.handleRequest(handler.SetPlaceForFestival))
-		s.Router.Post("/festivals/{objectID}/tags/{resourceID}", s.handleRequest(handler.SetTagForFestival))
-		s.Router.Delete("/festivals/{objectID}/image/{resourceID}", s.handleRequest(handler.RemoveImageForFestival))
-		s.Router.Delete("/festivals/{objectID}/links/{resourceID}", s.handleRequest(handler.RemoveLinkForFestival))
-		s.Router.Delete("/festivals/{objectID}/place/{resourceID}", s.handleRequest(handler.RemovePlaceForFestival))
-		s.Router.Delete("/festivals/{objectID}/tags/{resourceID}", s.handleRequest(handler.RemoveTagForFestival))
-	*/
+	s.Router.Post("/situations", s.handleRequest(handler.CreateSituation))
+	s.Router.Patch("/situations/{objectID}", s.handleRequest(handler.UpdateSituation))
+	s.Router.Delete("/situations/{objectID}", s.handleRequest(handler.DeleteSituation))
 }
 
 func (s *Server) Run(conf *config.Config) {

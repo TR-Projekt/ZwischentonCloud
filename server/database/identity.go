@@ -9,7 +9,7 @@ import (
 func GetAllUsers(db *sql.DB) ([]*token.User, error) {
 
 	query := "SELECT * FROM users;"
-	vars := []interface{}{}
+	vars := []any{}
 
 	rows, err := ExecuteRowQuery(db, query, vars)
 	if err != nil {
@@ -30,7 +30,7 @@ func GetAllUsers(db *sql.DB) ([]*token.User, error) {
 func GetUserByEmail(db *sql.DB, email string) (*token.User, error) {
 
 	query := "SELECT * FROM users WHERE `user_email`=?;"
-	vars := []interface{}{email}
+	vars := []any{email}
 
 	rows, err := ExecuteRowQuery(db, query, vars)
 	if err != nil {
@@ -47,7 +47,7 @@ func GetUserByEmail(db *sql.DB, email string) (*token.User, error) {
 func GetUserByID(db *sql.DB, userID string) (*token.User, error) {
 
 	query := "SELECT * FROM users WHERE `user_id`=?;"
-	vars := []interface{}{userID}
+	vars := []any{userID}
 
 	rows, err := ExecuteRowQuery(db, query, vars)
 	if err != nil {
@@ -64,7 +64,7 @@ func GetUserByID(db *sql.DB, userID string) (*token.User, error) {
 func CreateUserWithEmailAndPasswordHash(db *sql.DB, email string, passwordhash string) (bool, error) {
 
 	query := "INSERT INTO `users`(`user_email`, `user_password`, `user_role`) VALUES (?, ?, ?);"
-	vars := []interface{}{email, passwordhash, token.CREATOR}
+	vars := []any{email, passwordhash, token.CREATOR}
 
 	result, err := ExecuteQuery(db, query, vars)
 	if err != nil {
@@ -82,7 +82,7 @@ func CreateUserWithEmailAndPasswordHash(db *sql.DB, email string, passwordhash s
 func SetPasswordForUser(db *sql.DB, userID string, newpasswordhash string) (bool, error) {
 
 	query := "UPDATE `users` SET `user_password`=? WHERE `user_id`=?;"
-	vars := []interface{}{newpasswordhash, userID}
+	vars := []any{newpasswordhash, userID}
 
 	result, err := ExecuteQuery(db, query, vars)
 	if err != nil {
@@ -101,7 +101,7 @@ func SetPasswordForUser(db *sql.DB, userID string, newpasswordhash string) (bool
 func SetRoleForUser(db *sql.DB, userID string, newUserRole int) (bool, error) {
 
 	query := "UPDATE `users` SET `user_role`=? WHERE `user_id`=?;"
-	vars := []interface{}{newUserRole, userID}
+	vars := []any{newUserRole, userID}
 
 	result, err := ExecuteQuery(db, query, vars)
 	if err != nil {
@@ -120,7 +120,7 @@ func SetRoleForUser(db *sql.DB, userID string, newUserRole int) (bool, error) {
 func GetEntitiesForUser(entity Entity, db *sql.DB, userID string) ([]int, error) {
 
 	query := "SELECT `associated_" + string(entity) + "` FROM map_" + string(entity) + "_user WHERE `associated_user`=?;"
-	vars := []interface{}{userID}
+	vars := []any{userID}
 
 	rows, err := ExecuteRowQuery(db, query, vars)
 	if err != nil {
@@ -142,7 +142,7 @@ func GetEntitiesForUser(entity Entity, db *sql.DB, userID string) ([]int, error)
 func SetEntityForUser(entity Entity, db *sql.DB, objectID string, userID string) (bool, error) {
 
 	query := "INSERT INTO map_" + string(entity) + "_user(`associated_" + string(entity) + "`, `associated_user`) VALUES (?, ?);"
-	vars := []interface{}{objectID, userID}
+	vars := []any{objectID, userID}
 	result, err := ExecuteQuery(db, query, vars)
 	if err != nil {
 		return false, err
@@ -157,7 +157,7 @@ func SetEntityForUser(entity Entity, db *sql.DB, objectID string, userID string)
 func RemoveEntityForUser(entity Entity, db *sql.DB, objectID string, userID string) (bool, error) {
 
 	query := "DELETE FROM map_" + string(entity) + "_user WHERE `associated_" + string(entity) + "`=? AND `associated_user`=?;"
-	vars := []interface{}{objectID, userID}
+	vars := []any{objectID, userID}
 
 	result, err := ExecuteQuery(db, query, vars)
 	if err != nil {

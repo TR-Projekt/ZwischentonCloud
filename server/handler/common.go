@@ -23,7 +23,7 @@ type HandlerEncapsulator3000 struct {
 	Validator     *token.ValidationService
 }
 
-func GetObject(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
+func GetObject(db *sql.DB, r *http.Request, entity string) ([]any, error) {
 
 	objectID, err := ObjectID(r)
 	if err != nil {
@@ -34,7 +34,7 @@ func GetObject(db *sql.DB, r *http.Request, entity string) ([]interface{}, error
 	return GetObjects(db, entity, []int{objectID}, values)
 }
 
-func GetObjects(db *sql.DB, entity string, objectIDs []int, values url.Values) ([]interface{}, error) {
+func GetObjects(db *sql.DB, entity string, objectIDs []int, values url.Values) ([]any, error) {
 
 	var idValues []int
 	var rels []string
@@ -70,9 +70,9 @@ func GetObjects(db *sql.DB, entity string, objectIDs []int, values url.Values) (
 	}
 	// no rows and no error indicate a successful query but an empty result
 	if rows == nil {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
-	var fetchedObjects []interface{}
+	var fetchedObjects []any
 	// iterate over the rows an create
 	for rows.Next() {
 		// scan the object
@@ -100,7 +100,7 @@ func GetObjects(db *sql.DB, entity string, objectIDs []int, values url.Values) (
 	return fetchedObjects, nil
 }
 
-func SearchObjects(db *sql.DB, entity string, name string) ([]interface{}, error) {
+func SearchObjects(db *sql.DB, entity string, name string) ([]any, error) {
 
 	rows, err := database.Search(db, entity, name)
 	if err != nil {
@@ -108,9 +108,9 @@ func SearchObjects(db *sql.DB, entity string, name string) ([]interface{}, error
 	}
 	// no rows and no error indicate a successful query but an empty result
 	if rows == nil {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
-	var fetchedObjects []interface{}
+	var fetchedObjects []any
 	// iterate over the rows an create
 	for rows.Next() {
 		// scan the link
@@ -124,10 +124,10 @@ func SearchObjects(db *sql.DB, entity string, name string) ([]interface{}, error
 	return fetchedObjects, nil
 }
 
-func GetRelationships(db *sql.DB, entity string, objectID int, relationships []string) (interface{}, error) {
+func GetRelationships(db *sql.DB, entity string, objectID int, relationships []string) (any, error) {
 
 	// TODO check the relationship strings for sake of writing `include=links`instead of `include=link`?
-	relsDict := make(map[string]interface{})
+	relsDict := make(map[string]any)
 	for _, value := range relationships {
 		objcts, err := GetAssociatedObjects(db, entity, objectID, value, nil)
 		if err != nil {
@@ -138,7 +138,7 @@ func GetRelationships(db *sql.DB, entity string, objectID int, relationships []s
 	return relsDict, nil
 }
 
-func GetAssociation(db *sql.DB, r *http.Request, entity string, association string) ([]interface{}, error) {
+func GetAssociation(db *sql.DB, r *http.Request, entity string, association string) ([]any, error) {
 
 	objectID, err := ObjectID(r)
 	if err != nil {
@@ -148,7 +148,7 @@ func GetAssociation(db *sql.DB, r *http.Request, entity string, association stri
 	return GetAssociatedObjects(db, entity, objectID, association, includes)
 }
 
-func GetAssociatedObjects(db *sql.DB, entity string, objectID int, association string, includes []string) ([]interface{}, error) {
+func GetAssociatedObjects(db *sql.DB, entity string, objectID int, association string, includes []string) ([]any, error) {
 
 	rows, err := database.Resource(db, entity, objectID, association)
 	if err != nil {
@@ -156,9 +156,9 @@ func GetAssociatedObjects(db *sql.DB, entity string, objectID int, association s
 	}
 	// no rows and no error indicate a successful query but an empty result
 	if rows == nil {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
-	var fetchedObjects []interface{}
+	var fetchedObjects []any
 	// iterate over the rows an create
 	for rows.Next() {
 		// scan the link
@@ -184,7 +184,7 @@ func GetAssociatedObjects(db *sql.DB, entity string, objectID int, association s
 		fetchedObjects = append(fetchedObjects, obj)
 	}
 	if fetchedObjects == nil {
-		fetchedObjects = []interface{}{}
+		fetchedObjects = []any{}
 	}
 	return fetchedObjects, nil
 }
@@ -223,7 +223,7 @@ func RemoveAssociation(db *sql.DB, r *http.Request, entity string, association s
 	return nil
 }
 
-func Create(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
+func Create(db *sql.DB, r *http.Request, entity string) ([]any, error) {
 
 	body, readBodyErr := io.ReadAll(r.Body)
 	if readBodyErr != nil {
@@ -239,9 +239,9 @@ func Create(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
 	}
 	// no rows and no error indicate a successful query but an empty result
 	if rows == nil {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
-	var fetchedObjects []interface{}
+	var fetchedObjects []any
 	// iterate over the rows an create
 	for rows.Next() {
 		// scan the link
@@ -255,7 +255,7 @@ func Create(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
 	return fetchedObjects, nil
 }
 
-func Update(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
+func Update(db *sql.DB, r *http.Request, entity string) ([]any, error) {
 
 	objectID, err := ObjectID(r)
 	if err != nil {
@@ -273,7 +273,7 @@ func Update(db *sql.DB, r *http.Request, entity string) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	var fetchedObjects []interface{}
+	var fetchedObjects []any
 	// iterate over the rows an create
 	for rows.Next() {
 		// scan the link
@@ -335,7 +335,7 @@ func Includes(r *http.Request) []string {
 func ObjectIDs(idsString string) ([]int, error) {
 
 	var ids []int
-	for _, id := range strings.Split(idsString, ",") {
+	for id := range strings.SplitSeq(idsString, ",") {
 
 		idNum, err := strconv.ParseUint(id, 10, 64)
 		if err != nil {
@@ -354,39 +354,57 @@ func RelationshipNames(includes string) ([]string, error) {
 	return strings.Split(includes, ","), nil
 }
 
-func AnonScan(entity string, rs *sql.Rows) (interface{}, error) {
+func AnonScan(entity string, rs *sql.Rows) (any, error) {
 
 	if entity == "zwischenton" {
 		return model.ZwischentonScan(rs)
+	}
+	if entity == "situation" {
+		return model.SituationsScan(rs)
 	} else {
 		return nil, errors.New("scan row: tried to scan an unknown entity")
 	}
 }
 
-func AnonInclude(entity string, object interface{}, includes interface{}) (interface{}, error) {
+func AnonInclude(entity string, object any, includes any) (any, error) {
 
 	if entity == "zwischenton" {
 		realObject := object.(model.Zwischenton)
 		realObject.Include = includes
+		return realObject, nil
+	}
+	if entity == "situation" {
+		realObject := object.(model.Situation)
 		return realObject, nil
 	} else {
 		return nil, errors.New("include relationship: tried to add relationships to an unknown entity")
 	}
 }
 
-func AnonID(entity string, object interface{}) (int, error) {
+func AnonID(entity string, object any) (int, error) {
 
 	if entity == "zwischenton" {
 		return object.(model.Zwischenton).ID, nil
+	}
+	if entity == "situation" {
+		return object.(model.Situation).ID, nil
 	} else {
 		return -1, errors.New("get id: tried to retrieve the ID of an unknown entity")
 	}
 }
 
-func AnonUnmarshal(entity string, body []byte) (interface{}, error) {
+func AnonUnmarshal(entity string, body []byte) (any, error) {
 
 	if entity == "zwischenton" {
 		var objectToCreate model.Zwischenton
+		err := json.Unmarshal(body, &objectToCreate)
+		if err != nil {
+			return nil, err
+		}
+		return objectToCreate, nil
+	}
+	if entity == "situation" {
+		var objectToCreate model.Situation
 		err := json.Unmarshal(body, &objectToCreate)
 		if err != nil {
 			return nil, err
